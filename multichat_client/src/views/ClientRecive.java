@@ -62,6 +62,11 @@ public class ClientRecive extends Thread {
 				ClientApplication.getInstance()
 								.getMainCard()
 								.show(ClientApplication.getInstance().getMainPanel(), "roomPanel");
+				break;
+				
+			case "refreshUsernameList":
+				refreshUsernameList((List<String>) responseDto.getBody());
+				break;
 				
 			default:
 				break;
@@ -74,6 +79,11 @@ public class ClientRecive extends Thread {
 		for(Map<String, String> roomInfo : roomList) {
 			ClientApplication.getInstance().getRoomNameListModel().addElement(roomInfo.get("roomName"));
 		}
+	}
+	
+	private void refreshUsernameList(List<String> usernameList) {
+		ClientApplication.getInstance().getUsernameListModel().clear();
+		ClientApplication.getInstance().getUsernameListModel().addAll(usernameList);
 	}
 }
 

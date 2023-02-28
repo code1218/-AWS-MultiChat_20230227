@@ -53,6 +53,7 @@ public class ClientApplication extends JFrame {
 	@Setter
 	private List<Map<String, String>> roomInfoList;
 	private DefaultListModel<String> roomNameListModel;
+	private DefaultListModel<String> usernameListModel;
 	
 	
 	public static ClientApplication getInstance() {
@@ -164,6 +165,17 @@ public class ClientApplication extends JFrame {
 		
 		roomNameListModel = new DefaultListModel<String>();
 		JList roomList = new JList(roomNameListModel);
+		roomList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount() == 2) {
+					int selectedIndex = roomList.getSelectedIndex();
+					RequestDto<Map<String, String>> requestDto = 
+							new RequestDto<Map<String,String>>("enterRoom", roomInfoList.get(selectedIndex));
+					sendRequest(requestDto);
+				}
+			}
+		});
 		roomListScroll.setViewportView(roomList);
 		
 		JButton createRoomButton = new JButton("방생성");
@@ -192,7 +204,8 @@ public class ClientApplication extends JFrame {
 		joinUserListScroll.setBounds(0, 0, 348, 100);
 		roomPanel.add(joinUserListScroll);
 		
-		JList joinUserList = new JList();
+		usernameListModel = new DefaultListModel<String>();
+		JList joinUserList = new JList(usernameListModel);
 		joinUserListScroll.setViewportView(joinUserList);
 		
 		JButton roomExitButton = new JButton("나가기");
