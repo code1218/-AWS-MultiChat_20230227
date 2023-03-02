@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 @Getter
 public class ClientApplication extends JFrame {
@@ -81,6 +83,14 @@ public class ClientApplication extends JFrame {
 	}
 
 	private ClientApplication() {
+		
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				RequestDto<String> requestDto = new RequestDto<String>("exitRoom", null);
+				sendRequest(requestDto);
+			}
+		});
 		
 		/*========<< init >>========*/
 		gson = new Gson();
@@ -189,6 +199,9 @@ public class ClientApplication extends JFrame {
 				String roomName = null;
 				while(true) {
 					roomName = JOptionPane.showInputDialog(null, "생성할 방의 제목을 입력하세요", "방생성", JOptionPane.PLAIN_MESSAGE);
+					if(roomName == null) {
+						return;
+					}
 					if(!roomName.isBlank()) {
 						break;
 					}
@@ -239,6 +252,7 @@ public class ClientApplication extends JFrame {
 			public void keyPressed(KeyEvent e) {
 				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 					RequestDto<String> requestDto = new RequestDto<String>("sendMessage", sendMessageField.getText());
+					sendMessageField.setText("");
 					sendRequest(requestDto);
 				}
 			}
@@ -252,6 +266,7 @@ public class ClientApplication extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				RequestDto<String> requestDto = new RequestDto<String>("sendMessage", sendMessageField.getText());
+				sendMessageField.setText("");
 				sendRequest(requestDto);
 			}
 		});

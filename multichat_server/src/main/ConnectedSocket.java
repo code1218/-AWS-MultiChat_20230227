@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +47,9 @@ public class ConnectedSocket extends Thread {
 				System.out.println("요청: " + requestJson);
 				requestMapping(requestJson);
 			}
+		} catch (SocketException e) {
+			connectedSocketList.remove(this);
+			System.out.println(username + ": 클라이언트 종료");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -76,15 +80,19 @@ public class ConnectedSocket extends Thread {
 				break;
 			case "sendMessage":
 				room = findConnectedRoom(username);
-				sendToAll(new ResponseDto<String>("reciveMessage", username + " >>> " + (String) requestDto.getBody()), room.getUsers());
+				sendToAll(new ResponseDto<String>("receiveMessage", username + " >>> " + (String) requestDto.getBody()), room.getUsers());
 				break;
 				
 			case "exitRoom":
 				room = findConnectedRoom(username);
-				if(room.getOwner().equals(username)) {
-					exitRoomAll(room);
-				}else {
-					exitRoom(room);
+				try {
+					if(room.getOwner().equals(username)) {
+						exitRoomAll(room);
+					}else {
+						exitRoom(room);
+					}					
+				} catch (NullPointerException e) {
+					System.out.println("클라이언트 강제 종료됨");
 				}
 				break;
 		}

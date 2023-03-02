@@ -74,7 +74,7 @@ public class ClientRecive extends Thread {
 								.show(ClientApplication.getInstance().getMainPanel(), "roomPanel");
 				break;
 				
-			case "reciveMessage":
+			case "receiveMessage":
 				ClientApplication.getInstance().getChattingContent().append((String) responseDto.getBody() + "\n");
 				break;
 				
