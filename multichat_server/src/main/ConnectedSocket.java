@@ -32,44 +32,60 @@ public class ConnectedSocket extends Thread {
 	public ConnectedSocket(Socket socket) {
 		this.socket = socket;
 		gson = new Gson();
-		Room room = new Room("TestRoom" + index, "TestUser" + index);
-		index++;
-		roomList.add(room);
 	}
 	
 	@Override
 	public void run() {
-		while(true) {
-			BufferedReader bufferedReader;
-			try {
+		
+		BufferedReader bufferedReader;
+		try {
+			while(true) {
 				bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String requestJson = bufferedReader.readLine();
 				
 				System.out.println("요청: " + requestJson);
 				requestMapping(requestJson);
-				
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
-			
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	private void requestMapping(String requestJson) {
 		RequestDto<?> requestDto = gson.fromJson(requestJson, RequestDto.class);
 		
+		Room room = null;
+		
 		switch(requestDto.getResource()) {
 			case "usernameCheck":
 				checkUsername((String) requestDto.getBody());
 				break;
 			case "createRoom":
-				Room room = new Room((String) requestDto.getBody(), username);
+				room = new Room((String) requestDto.getBody(), username);
 				room.getUsers().add(this);
 				roomList.add(room);
-				ResponseDto<String> responseDto = new ResponseDto<String>("createRoomSuccessfully", null);
-				sendToMe(responseDto);
-				refreshUsernameList(username);
+				sendToMe(new ResponseDto<String>("createRoomSuccessfully", null));
+				refreshUsernameList(room);
 				sendToAll(refreshRoomList(), connectedSocketList);
+				break;
+			case "enterRoom": 
+				room = findRoom((Map<String, String>) requestDto.getBody());
+				room.getUsers().add(this);
+				sendToMe(new ResponseDto<String>("enterRoomSuccessfully", null));
+				refreshUsernameList(room);
+				break;
+			case "sendMessage":
+				room = findConnectedRoom(username);
+				sendToAll(new ResponseDto<String>("reciveMessage", username + " >>> " + (String) requestDto.getBody()), room.getUsers());
+				break;
+				
+			case "exitRoom":
+				room = findConnectedRoom(username);
+				if(room.getOwner().equals(username)) {
+					exitRoomAll(room);
+				}else {
+					exitRoom(room);
+				}
 				break;
 		}
 	}
@@ -128,8 +144,7 @@ public class ConnectedSocket extends Thread {
 		return null;
 	}
 	
-	private void refreshUsernameList(String username) {
-		Room room = findConnectedRoom(username);
+	private void refreshUsernameList(Room room) {
 		List<String> usernameList = new ArrayList<>();
 		usernameList.add("방제목: " + room.getRoomName());
 		for(ConnectedSocket connectedSocket : room.getUsers()) {
@@ -142,6 +157,23 @@ public class ConnectedSocket extends Thread {
 		ResponseDto<List<String>> responseDto = new ResponseDto<List<String>>("refreshUsernameList", usernameList);
 		sendToAll(responseDto, room.getUsers());
 	}
+	
+	private void exitRoomAll(Room room) {
+		sendToAll(new ResponseDto<String>("exitRoom", null), room.getUsers());
+		roomList.remove(room);
+		sendToAll(refreshRoomList(), connectedSocketList);
+	}
+	
+	private void exitRoom(Room room) {
+		room.getUsers().remove(this);
+		sendToMe(new ResponseDto<String>("exitRoom", null));
+		refreshUsernameList(room);
+	}
+	
+	
+	
+	
+	
 	
 	
 	private void sendToMe(ResponseDto<?> responseDto) {

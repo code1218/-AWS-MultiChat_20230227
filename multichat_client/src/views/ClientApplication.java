@@ -54,6 +54,10 @@ public class ClientApplication extends JFrame {
 	private List<Map<String, String>> roomInfoList;
 	private DefaultListModel<String> roomNameListModel;
 	private DefaultListModel<String> usernameListModel;
+	private JList roomList; 
+	private JList joinUserList;
+	
+	private JTextArea chattingContent;
 	
 	
 	public static ClientApplication getInstance() {
@@ -164,7 +168,7 @@ public class ClientApplication extends JFrame {
 		roomListPanel.add(roomListScroll);
 		
 		roomNameListModel = new DefaultListModel<String>();
-		JList roomList = new JList(roomNameListModel);
+		roomList = new JList(roomNameListModel);
 		roomList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -205,10 +209,19 @@ public class ClientApplication extends JFrame {
 		roomPanel.add(joinUserListScroll);
 		
 		usernameListModel = new DefaultListModel<String>();
-		JList joinUserList = new JList(usernameListModel);
+		joinUserList = new JList(usernameListModel);
 		joinUserListScroll.setViewportView(joinUserList);
 		
 		JButton roomExitButton = new JButton("나가기");
+		roomExitButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(JOptionPane.showConfirmDialog(null, "정말로 방을 나가시겠습니까?", "방 나가기", JOptionPane.YES_NO_OPTION) == 0){
+					RequestDto<String> requestDto = new RequestDto<String>("exitRoom", null);
+					sendRequest(requestDto);
+				}
+			}
+		});
 		roomExitButton.setBounds(348, 0, 106, 100);
 		roomPanel.add(roomExitButton);
 		
@@ -216,15 +229,32 @@ public class ClientApplication extends JFrame {
 		chattingContentScroll.setBounds(0, 98, 454, 596);
 		roomPanel.add(chattingContentScroll);
 		
-		JTextArea chattingContent = new JTextArea();
+		chattingContent = new JTextArea();
 		chattingContentScroll.setViewportView(chattingContent);
+		chattingContent.setEditable(false);
 		
 		sendMessageField = new JTextField();
+		sendMessageField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+					RequestDto<String> requestDto = new RequestDto<String>("sendMessage", sendMessageField.getText());
+					sendRequest(requestDto);
+				}
+			}
+		});
 		sendMessageField.setBounds(0, 694, 381, 57);
 		roomPanel.add(sendMessageField);
 		sendMessageField.setColumns(10);
 		
 		JButton sendButton = new JButton("전송");
+		sendButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				RequestDto<String> requestDto = new RequestDto<String>("sendMessage", sendMessageField.getText());
+				sendRequest(requestDto);
+			}
+		});
 		sendButton.setBounds(380, 694, 74, 57);
 		roomPanel.add(sendButton);
 		
